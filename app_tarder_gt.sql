@@ -64,12 +64,26 @@
 -- 	ORDER BY avg_rating DESC;
 
 
-SELECT name, AVG((p.price :: INTEGER) + a.price)  AS avg_price
-FROM app_store_apps AS a
-INNER JOIN play_store_apps AS p
-USING(name)
-GROUP BY name
-ORDER BY avg_price DESC;
+--TO GET THE AVG PRICE FOR BOTH APPS
+--in the case then statment the values in the input and output have to match in kind.
+-- SELECT name, 
+-- 	CASE 
+-- 	WHEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC >= a.price THEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC
+-- 	WHEN a.price >= TRIM(REPLACE (p.price ,'$', ''))::NUMERIC THEN a.price
+-- 	END AS app_price
+-- FROM app_store_apps AS a
+-- INNER JOIN play_store_apps AS p
+-- USING(name)
+-- ORDER BY app_price DESC;
+
+-- select name, a.price::money, p.price::money,
+-- 	-- CASE 
+-- 	-- WHEN p.price >= a.price THEN p.price
+-- 	-- WHEN a.price >= p.price THEN a.price
+-- 	-- ELSE 'N/A' END AS app_price
+-- from play_store_apps as p
+-- Join app_store_apps as a
+-- using (name);
 
 -- --MAIN QUERY COMBINING RATING AND TOTAL REVIEWS
 -- Select name,
@@ -81,4 +95,75 @@ ORDER BY avg_price DESC;
 -- 	GROUP BY name
 -- 	HAVING SUM(CAST(a.review_count AS INTEGER) + p.review_count) >= 1000
 -- 	ORDER BY total_reviews DESC
+
+-- -- HOW TO CALCULATE THE expected_life
+-- Select name,
+-- 	p.install_count, 
+-- 	((ROUND(AVG((p.rating + a.rating)/2),2) * 2)+1) AS expected_life,
+-- 	ROUND(AVG((p.rating + a.rating)/2),2) AS avg_rating,
+-- 	SUM(CAST(a.review_count AS INTEGER) + p.review_count) AS total_reviews,
+-- 	a.price::money AS app_store_price, 
+-- 	p.price::money AS play_store_price
+-- from play_store_apps as p
+-- inner Join app_store_apps as a
+-- USING(name)
+-- 	GROUP BY name, a.price::money, p.price::money, p.install_count
+-- 	HAVING SUM(CAST(a.review_count AS INTEGER) + p.review_count) >= 1000
+-- 	ORDER BY total_reviews DESC;
+
+
+-- -- ATTEMPT AT INTERSECT
+-- SELECT name, 
+-- 	CASE 
+-- 	WHEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC >= a.price THEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC
+-- 	WHEN a.price >= TRIM(REPLACE (p.price ,'$', ''))::NUMERIC THEN a.price
+-- 	END AS app_price,
+-- 	ROUND(AVG((p.rating + a.rating)/2),2) AS avg_rating
+-- FROM app_store_apps AS a
+-- INNER JOIN play_store_apps AS p
+-- USING(name)
+-- 	GROUP BY name, p.price, a.price
+	
+-- 	INTERSECT
+	
+-- SELECT name, 
+-- 	CASE 
+-- 	WHEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC >= a.price THEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC
+-- 	WHEN a.price >= TRIM(REPLACE (p.price ,'$', ''))::NUMERIC THEN a.price
+-- 	END AS app_price,
+-- 	ROUND(AVG((p.rating + a.rating)/2),2) AS avg_rating
+-- FROM app_store_apps AS a
+-- INNER JOIN play_store_apps AS p
+-- USING(name)
+-- 	GROUP BY name, p.price, a.price
+-- 	ORDER BY avg_rating DESC;
+
+
+-- MAIN CODE
+Select
+	name,
+	((ROUND(AVG((p.rating + a.rating)/2),2) * 2)+1) AS expected_life,
+CASE 
+	WHEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC >= a.price THEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC
+	WHEN a.price >= TRIM(REPLACE (p.price ,'$', ''))::NUMERIC THEN a.price
+END AS app_price,
+	REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC as pi_count,
+--CASE 
+	--WHEN app_price = 0 THEN 10000
+	--WHEN app_price > 0 THEN (app_price * 10000) 
+--END AS app_coast,
+	p.content_rating,
+	a.content_rating,
+	ROUND(AVG((p.rating + a.rating)/2),2) AS avg_rating,
+	SUM(CAST(a.review_count AS INTEGER) + p.review_count) AS total_reviews
+from play_store_apps as p
+inner Join app_store_apps as a
+USING(name)
+	GROUP BY name, p.install_count, p.content_rating, a.content_rating, p.price, a.price
+	HAVING 
+		SUM(CAST(a.review_count AS INTEGER) + p.review_count) >= 1000 AND
+		ROUND(AVG((p.rating + a.rating)/2),2) >= 4.0 AND 
+		REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC >= 500000000
+	ORDER BY total_reviews DESC
+	--LIMIT 10;
 
