@@ -203,12 +203,17 @@ USING(name)
 		REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC >= 500000000
 	ORDER BY total_reviews DESC;
 
+
+
+
+
 Select
-	name,((ROUND(AVG((p.rating + a.rating)/2),2) * 2)+1) AS expected_life,
-	CASE 
+	name,
+	((ROUND(AVG((p.rating + a.rating)/2),0) * 2)+1) AS expected_life,
+CASE 
 	WHEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC >= a.price THEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC
 	WHEN a.price >= TRIM(REPLACE (p.price ,'$', ''))::NUMERIC THEN a.price
-	END AS app_price,
+END AS app_price,
 	REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC as pi_count,
 	p.content_rating,
 	a.content_rating,
@@ -220,6 +225,10 @@ USING(name)
 	GROUP BY name, p.install_count, p.content_rating, a.content_rating, p.price, a.price
 	HAVING 
 		SUM(CAST(a.review_count AS INTEGER) + p.review_count) >= 1000 AND
-		ROUND(AVG((p.rating + a.rating)/2),2) >= 4.0 AND 
+		ROUND(AVG((p.rating + a.rating)/2),2) >= 4.0
+	 AND 
 		REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC >= 500000000
-	ORDER BY expected_life DESC;
+	ORDER BY total_reviews DESC;
+
+
+
