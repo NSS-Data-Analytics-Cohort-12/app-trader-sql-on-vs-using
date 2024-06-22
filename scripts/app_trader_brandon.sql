@@ -130,26 +130,51 @@
 -- 	HAVING SUM(CAST(a.review_count AS INTEGER) + p.review_count) >= 1000
 -- 	ORDER BY pi_count DESC;
 
-Select
-	name,
-	CASE 
-	WHEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC >= a.price THEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC
-	WHEN a.price >= TRIM(REPLACE (p.price ,'$', ''))::NUMERIC THEN a.price
-	END AS app_price,
-	REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC as pi_count,
-	p.content_rating,
-	a.content_rating,
-	ROUND(AVG((p.rating + a.rating)/2),2) AS avg_rating,
-	SUM(CAST(a.review_count AS INTEGER) + p.review_count) AS total_reviews,
-	((ROUND(AVG((p.rating + a.rating)/2),2) * 2)+1) AS expected_life
-from play_store_apps as p
-inner Join app_store_apps as a
-USING(name)
-	GROUP BY name, p.install_count, p.content_rating, a.content_rating, p.price, a.price
-	HAVING 
-		SUM(CAST(a.review_count AS INTEGER) + p.review_count) >= 1000 AND
-		ROUND(AVG((p.rating + a.rating)/2),2) >= 4 AND 
-		REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC >= 500000000
-	ORDER BY pi_count DESC;
+-- Select
+-- 	name,
+-- 	CASE 
+-- 	WHEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC >= a.price THEN TRIM(REPLACE( p.price ,'$', ''))::NUMERIC
+-- 	WHEN a.price >= TRIM(REPLACE (p.price ,'$', ''))::NUMERIC THEN a.price
+-- 	END AS app_price,
+-- 	REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC as pi_count,
+-- 	p.content_rating,
+-- 	a.content_rating,
+-- 	ROUND(AVG((p.rating + a.rating)/2),2) AS avg_rating,
+-- 	SUM(CAST(a.review_count AS INTEGER) + p.review_count) AS total_reviews,
+-- 	((ROUND(AVG((p.rating + a.rating)/2),2) * 2)+1) AS expected_life
+-- from play_store_apps as p
+-- inner Join app_store_apps as a
+-- USING(name)
+-- 	GROUP BY name, p.install_count, p.content_rating, a.content_rating, p.price, a.price
+-- 	HAVING 
+-- 		SUM(CAST(a.review_count AS INTEGER) + p.review_count) >= 1000 AND
+-- 		ROUND(AVG((p.rating + a.rating)/2),2) >= 4 AND 
+-- 		REPLACE(REPLACE(install_count, '+',''), ',', '') :: NUMERIC >= 500000000
+-- 	ORDER BY total_reviews DESC;
 
+--THE REST IS POST WALKTHROUGH--
+
+-- select
+-- 	name,
+-- 	(10000*12*lifespan) - marketingprice
+-- 	-
+-- 	(case whencleanedPrice < 1 then 10000
+-- 	else10000 * cleanedPrice end) as totalRev
+-- from
+-- 	(
+-- 	select distinct a.name)
+-- 	)
+	--
+-- select
+-- 			distinct a.name,
+-- 			-- p.name,
+-- 			greatest(
+-- 				a.price, 
+-- 				CAST( TRIM( REPLACE(p.price, '$', '') ) AS numeric )
+-- 			) as cleanedPrice
+-- --			1 + ( 2 *(round(a.rating + p.rating) / 2 ) ) as lifespan,
+-- --			1000 * 12 * ( 1 + ( 2 *( round(a.rating + p.rating) / 2 ) ) ) as marketingPrice
+-- 		from app_store_apps a
+-- 		inner join play_store_apps p
+-- 		on lower(a.name) = lower(p.name)
 
